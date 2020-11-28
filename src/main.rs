@@ -17,8 +17,7 @@ use litex_hal as hal;
 use riscv_rt::entry;
 
 use embedded_graphics::{
-    fonts::{Font8x16, Text},
-    pixelcolor::BinaryColor,
+    fonts::{Font6x12, Text},
     prelude::*,
     pixelcolor::Rgb565,
     primitives::{Circle, Rectangle, Triangle},
@@ -81,7 +80,7 @@ fn main() -> ! {
     loop {
         i = i.wrapping_add(1);
         text.clear();
-        text.push_str("Harrison ");
+        text.push_str("Hello Rust ");
         text.push_str(i.numtoa_str(10, &mut num_buffer));
         text.push_str("\n");
         serial.bwrite_all(text.as_bytes()).unwrap();
@@ -113,8 +112,8 @@ fn main() -> ! {
 
         Text::new(&text, Point::new(0, 24))
             .into_styled(
-                TextStyleBuilder::new(Font8x16)
-                    .text_color(Rgb565::CYAN)
+                TextStyleBuilder::new(Font6x12)
+                    .text_color(Rgb565::BLUE)
                     .build(),
             )
             .draw(&mut display)
