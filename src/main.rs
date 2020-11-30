@@ -80,7 +80,7 @@ fn main() -> ! {
     loop {
         i = i.wrapping_add(1);
         text.clear();
-        text.push_str("Hello Rust ");
+        text.push_str("HARRISON\nROCKS\n");
         text.push_str(i.numtoa_str(10, &mut num_buffer));
         text.push_str("\n");
         serial.bwrite_all(text.as_bytes()).unwrap();
