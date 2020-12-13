@@ -29,6 +29,7 @@ use embedded_graphics::{
 use ssd1331::{DisplayRotation::Rotate0, Ssd1331};
 use st7789::{ST7789, Orientation};
 use display_interface::WriteOnlyDataCommand;
+use embedded_graphics::fonts::{Font12x16, Font6x6};
 
 hal::uart! {
     UART: pac::UART,
@@ -97,7 +98,7 @@ fn st7789_nocs<SPI, DC, RST>(spi: SPI, dc: DC, rstn: RST, delay_source: &mut imp
 //    delay.delay_us(1000u32);
 //    csn.set_low();
 //    delay.delay_us(1000u32);
-    
+
     // create driver
     let mut display = ST7789::new(di, rstn, 240, 240);
     display.init(delay_source);//.unwrap();
@@ -128,8 +129,8 @@ fn main() -> ! {
     };
 
     //let mut display = ssd1331(spi, dc, csn, rstn, &mut delay);
-//    let mut display = st7789(spi, dc, csn, rstn, &mut delay);
-    let mut display = st7789_nocs(spi, dc, rstn, &mut delay);
+    let mut display = st7789(spi, dc, csn, rstn, &mut delay);
+//    let mut display = st7789_nocs(spi, dc, rstn, &mut delay);
 
     let mut i: u8 = 0;
     let mut num_buffer = [0u8; 20];
@@ -170,7 +171,7 @@ fn main() -> ! {
 
         Text::new(&text, Point::new(0, 24 ))
             .into_styled(
-                TextStyleBuilder::new(Font6x12)
+                TextStyleBuilder::new(Font6x6)
                     .text_color(Rgb565::BLUE)
                     .build(),
             )
