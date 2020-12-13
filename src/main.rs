@@ -2,7 +2,7 @@
 #![no_main]
 
 use embedded_hal;
-use embedded_hal::digital::v2::{OutputPin, ToggleableOutputPin};
+use embedded_hal::digital::v2::{OutputPin};
 use embedded_hal::blocking::delay::{DelayMs, DelayUs};
 use embedded_hal::blocking::serial::Write;
 use nb;
@@ -18,9 +18,9 @@ use riscv_rt::entry;
 use display_interface_spi::{SPIInterface, SPIInterfaceNoCS};
 
 use embedded_graphics::{
-    fonts::{Font6x12, Text},
+    fonts::*,
     prelude::*,
-    pixelcolor::Rgb565,
+    pixelcolor::{Rgb565, raw::RawU16},
     primitives::{Circle, Rectangle, Triangle},
     style::PrimitiveStyleBuilder,
     style::TextStyleBuilder,
@@ -29,7 +29,6 @@ use embedded_graphics::{
 use ssd1331::{DisplayRotation::Rotate0, Ssd1331};
 use st7789::{ST7789, Orientation};
 use display_interface::WriteOnlyDataCommand;
-use embedded_graphics::fonts::{Font12x16, Font6x6};
 
 hal::uart! {
     UART: pac::UART,
@@ -48,25 +47,25 @@ hal::timer! {
     TIMER: pac::TIMER0,
 }
 
-/*
-fn ssd1331<SPI,DC,CS,RST>(spi: SPI, dc: DC, csn: CS, rstn: RST, delay_source: &mut impl DelayUs<u32>) -> Ssd1331<SPI,DC>
+
+fn ssd1331<SPI, DC, CS, RST, PinE>(spi: SPI, dc: DC, csn: &mut CS, rstn: &mut RST, delay_source: &mut impl DelayMs<u8>) -> Ssd1331<SPI, DC>
     where SPI: embedded_hal::blocking::spi::Write<u8>,
-          DC: OutputPin,
-          CS: OutputPin,
-          RST: OutputPin,
+          DC: OutputPin<Error = PinE>,
+          CS: OutputPin<Error = PinE>,
+          RST: OutputPin<Error = PinE>,
 {
-    csn.set_high().unwrap();
-    csn.set_low().unwrap();
+    csn.set_high();
+    csn.set_low();
 
     let mut display = Ssd1331::new(spi, dc, Rotate0);
-    display.reset(&mut rstn, &mut delay_source).unwrap();
-    display.init().unwrap();
-    display.flush().unwrap();
+    display.reset(rstn, delay_source);
+    display.init();
+    display.flush();
     display
 }
-*/
 
-fn st7789<SPI, DC, CS, RST>(spi: SPI, dc: DC, csn: CS, rstn: RST, delay_source: &mut impl DelayUs<u32>) -> ST7789<SPIInterface<SPI, DC, CS>,RST>
+
+fn st7789<SPI, DC, CS, RST>(spi: SPI, dc: DC, csn: CS, rstn: RST, delay_source: &mut impl DelayUs<u32>) -> ST7789<SPIInterface<SPI, DC, CS>, RST>
     where SPI: embedded_hal::blocking::spi::Write<u8>,
           DC: OutputPin,
           CS: OutputPin,
@@ -123,14 +122,17 @@ fn main() -> ! {
     let spi = SPI {
         registers: peripherals.OLED_SPI
     };
-    let mut delay = TIMER {
+    let mut delay_source = TIMER {
         registers: peripherals.TIMER0,
         sys_clk: 50_000_000,
     };
 
-    //let mut display = ssd1331(spi, dc, csn, rstn, &mut delay);
-    let mut display = st7789(spi, dc, csn, rstn, &mut delay);
-//    let mut display = st7789_nocs(spi, dc, rstn, &mut delay);
+    csn.set_high();
+    csn.set_low();
+
+    let mut display = ssd1331(spi, dc, &mut csn, &mut rstn, &mut delay_source);
+//    let mut display = st7789(spi, dc, csn, rstn, &mut delay_source);
+//   let mut display = st7789_nocs(spi, dc, rstn, &mut delay_source);
 
     let mut i: u8 = 0;
     let mut num_buffer = [0u8; 20];
@@ -152,14 +154,13 @@ fn main() -> ! {
             }
         }
 
-        display.clear(Rgb565::BLACK);
+        display.clear();
 
+        /*
         let style = PrimitiveStyleBuilder::new()
             .stroke_width(1)
             .stroke_color(Rgb565::YELLOW)
-            .build();
-
-        // triangle
+            .build();        // triangle
         Triangle::new(
             Point::new(16, 16 ),
             Point::new(16 + 16, 16 ),
@@ -168,19 +169,37 @@ fn main() -> ! {
             .into_styled(style)
             .draw(&mut display)
             .unwrap();
-
+        */
         Text::new(&text, Point::new(0, 24 ))
             .into_styled(
-                TextStyleBuilder::new(Font6x6)
+                TextStyleBuilder::new(Font6x12)
                     .text_color(Rgb565::BLUE)
                     .build(),
             )
             .draw(&mut display)
             .unwrap();
 
-        //display.flush().unwrap();
+        // this flushes the ssd1331 framebuffer entirely to the ssd1331.
+        display.flush();
 
-        delay.delay_ms(1000 as u32);
+        // now draw our ad hoc hw accelerated things
+        let raw_yellow = RawU16::from(Rgb565::YELLOW).into_inner();
+
+        display.draw_hw_line(16, 16, 32, 16, raw_yellow);
+        display.draw_hw_line(32, 16, 24, 0, raw_yellow);
+        display.draw_hw_line(24, 0, 16, 16, raw_yellow);
+
+        //display.draw_hw_rect(16, 16, 32, 16, raw_yellow, None);
+        //display.draw_hw_rect(32, 16, 24, 0, raw_yellow, None);
+        //display.draw_hw_rect(24, 0, 16, 16, raw_yellow, None);
+
+        let raw_green = RawU16::from(Rgb565::GREEN).into_inner();
+        let raw_red = RawU16::from(Rgb565::RED).into_inner();
+        let raw_cyan = RawU16::from(Rgb565::CYAN).into_inner();
+        display.draw_hw_rect(34, 0, 42, 16, raw_red, Some(raw_green), &mut delay_source);
+        display.draw_hw_rect(44, 0, 52, 16, raw_cyan, None, &mut delay_source);
+
+        delay_source.delay_ms(1000 as u32);
         // do some graphics stuff in here
     }
 }
