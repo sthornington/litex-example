@@ -196,8 +196,7 @@ fn main() -> ! {
         let raw_green = RawU16::from(Rgb565::GREEN).into_inner();
         let raw_red = RawU16::from(Rgb565::RED).into_inner();
         let raw_cyan = RawU16::from(Rgb565::CYAN).into_inner();
-        display.draw_hw_rect(34, 0, 42, 16, raw_red, Some(raw_green), &mut delay_source);
-        display.draw_hw_rect(44, 0, 52, 16, raw_cyan, None, &mut delay_source);
+        display.draw_hw_rect(34, 0, 95, 63, raw_red, Some(raw_green), &mut delay_source);
 
         delay_source.delay_ms(1000 as u32);
         // do some graphics stuff in here
