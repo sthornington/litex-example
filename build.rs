@@ -15,7 +15,7 @@ fn main() {
 
     let mut f = File::create(&dest_path.join("regions.ld"))
         .expect("Could not create file");
-    f.write_all(include_bytes!("../litex/litex-boards/litex_boards/targets/build/ulx3s/software/include/generated/regions.ld"))
+    f.write_all(include_bytes!("../litex/litex-boards/litex_boards/targets/build/radiona_ulx3s/software/include/generated/regions.ld"))
         .expect("Could not write file");
 
     println!("cargo:rustc-link-search={}", dest_path.display());
