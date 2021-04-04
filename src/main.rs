@@ -37,6 +37,9 @@ hal::uart! {
 hal::gpio! {
     CTL: pac::OLED_CTL,
     LEDS: pac::LEDS,
+
+    // something wrong with this
+    //MATRIX: pac::MATRIX_SPI,
 }
 
 hal::spi! {
@@ -122,11 +125,15 @@ fn main() -> ! {
     let spi = SPI {
         registers: peripherals.OLED_SPI
     };
+    // TODO make this work
+    /*
+    let m0 = MATRIX { index: 0 };
+    let m1 = MATRIX { index: 1 };
+*/
     let mut delay_source = TIMER {
         registers: peripherals.TIMER0,
         sys_clk: 50_000_000,
     };
-
     csn.set_high();
     csn.set_low();
 
@@ -182,6 +189,22 @@ fn main() -> ! {
         // this flushes the ssd1331 framebuffer entirely to the ssd1331.
         display.flush();
 
+        // something wrong with this, it's speed not out so maybe the macro doesn't work?
+        // maybe just do it with unsafe directly?
+        /*
+        if i % 3 == 0 {
+            m0.set_high();
+        } else {
+            m0.set_low();
+        }
+        if i % 7 == 0 {
+            m1.set_high();
+        } else {
+            m1.set_low();
+        }
+*/
+
+/*
         // now draw our ad hoc hw accelerated things
         let raw_yellow = RawU16::from(Rgb565::YELLOW).into_inner();
 
@@ -197,6 +220,7 @@ fn main() -> ! {
         let raw_red = RawU16::from(Rgb565::RED).into_inner();
         let raw_cyan = RawU16::from(Rgb565::CYAN).into_inner();
         display.draw_hw_rect(34, 0, 95, 63, raw_red, Some(raw_green), &mut delay_source);
+*/
 
         delay_source.delay_ms(1000 as u32);
         // do some graphics stuff in here
