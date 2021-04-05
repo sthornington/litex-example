@@ -125,7 +125,7 @@ fn main() -> ! {
     let spi = SPI {
         registers: peripherals.OLED_SPI
     };
-    let matrix_raw = 0x8000_0000 as *mut u32;
+    let matrix_raw = 0xC000_0000 as *mut u32;
     let matrix = unsafe { core::slice::from_raw_parts_mut(matrix_raw, 8) };
     // TODO make this work
     /*
