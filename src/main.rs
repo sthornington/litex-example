@@ -125,6 +125,8 @@ fn main() -> ! {
     let spi = SPI {
         registers: peripherals.OLED_SPI
     };
+    let matrix_raw = 0x8000_0000 as *mut u32;
+    let matrix = unsafe { core::slice::from_raw_parts_mut(matrix_raw, 8) };
     // TODO make this work
     /*
     let m0 = MATRIX { index: 0 };
@@ -141,7 +143,7 @@ fn main() -> ! {
 //    let mut display = st7789(spi, dc, csn, rstn, &mut delay_source);
 //   let mut display = st7789_nocs(spi, dc, rstn, &mut delay_source);
 
-    let mut i: u8 = 0;
+    let mut i: u32 = 0;
     let mut num_buffer = [0u8; 20];
     let mut text = ArrayString::<[_; 256]>::new();
 
@@ -154,7 +156,7 @@ fn main() -> ! {
         serial.bwrite_all(text.as_bytes()).unwrap();
 
         for j in 0..8 {
-            if (i & (1u8 << j)) > 0 {
+            if ((i as u8) & (1u8 << j)) > 0 {
                 let _ = LEDS { index: j }.set_high();
             } else {
                 let _ = LEDS { index: j }.set_low();
@@ -188,6 +190,18 @@ fn main() -> ! {
 
         // this flushes the ssd1331 framebuffer entirely to the ssd1331.
         display.flush();
+
+        let rows = 8;
+
+        for j in 0..rows {
+            if j == (i / 8) % 8 {
+                let q = i % 8;
+                let x: u32 = 0x07 << q;
+                matrix[j as usize] = x;
+            } else {
+                matrix[j as usize] = 0;
+            }
+        }
 
         // something wrong with this, it's speed not out so maybe the macro doesn't work?
         // maybe just do it with unsafe directly?
