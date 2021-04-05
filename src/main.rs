@@ -127,6 +127,10 @@ fn main() -> ! {
     };
     let matrix_raw = 0xC000_0000 as *mut u32;
     let matrix = unsafe { core::slice::from_raw_parts_mut(matrix_raw, 8) };
+
+    for x in matrix.iter_mut() {
+        *x = 0;
+    }
     // TODO make this work
     /*
     let m0 = MATRIX { index: 0 };
@@ -134,7 +138,7 @@ fn main() -> ! {
 */
     let mut delay_source = TIMER {
         registers: peripherals.TIMER0,
-        sys_clk: 50_000_000,
+        sys_clk: 25_000_000,
     };
     csn.set_high();
     csn.set_low();
@@ -150,9 +154,8 @@ fn main() -> ! {
     loop {
         i = i.wrapping_add(1);
         text.clear();
-        text.push_str("HARRISON\nROCKS\n");
         text.push_str(i.numtoa_str(10, &mut num_buffer));
-        text.push_str("\n");
+        text.push_str("\r");
         serial.bwrite_all(text.as_bytes()).unwrap();
 
         for j in 0..8 {
@@ -194,10 +197,8 @@ fn main() -> ! {
         let rows = 8;
 
         for j in 0..rows {
-            if j == (i / 8) % 8 {
-                let q = i % 8;
-                let x: u32 = 0x07 << q;
-                matrix[j as usize] = x;
+            if j == (i/8) % 8 {
+                matrix[j as usize] = 0x0f << ((i%8)*4);
             } else {
                 matrix[j as usize] = 0;
             }
@@ -236,7 +237,7 @@ fn main() -> ! {
         display.draw_hw_rect(34, 0, 95, 63, raw_red, Some(raw_green), &mut delay_source);
 */
 
-        delay_source.delay_ms(1000 as u32);
+        delay_source.delay_ms(100 as u32);
         // do some graphics stuff in here
     }
 }
