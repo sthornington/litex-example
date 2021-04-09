@@ -30,6 +30,8 @@ use ssd1331::{DisplayRotation::Rotate0, Ssd1331};
 use st7789::{ST7789, Orientation};
 use display_interface::WriteOnlyDataCommand;
 
+use oorandom::*;
+
 hal::uart! {
     UART: pac::UART,
 }
@@ -129,7 +131,7 @@ fn main() -> ! {
     let matrix = unsafe { core::slice::from_raw_parts_mut(matrix_raw, 8) };
 
     for x in matrix.iter_mut() {
-        *x = 0;
+        *x = 0xffffffff;
     }
     // TODO make this work
     /*
@@ -149,13 +151,19 @@ fn main() -> ! {
 
     let mut i: u32 = 0;
     let mut num_buffer = [0u8; 20];
-    let mut text = ArrayString::<[_; 256]>::new();
+    let mut text = ArrayString::<[_; 1024]>::new();
+
+    let mut rng = oorandom::Rand32::new(matrix[0].into());
 
     loop {
         i = i.wrapping_add(1);
         text.clear();
-        text.push_str(i.numtoa_str(10, &mut num_buffer));
-        text.push_str("\r");
+        for i in 0..8 {
+            text.push_str(i.numtoa_str(10, &mut num_buffer));
+            text.push_str(" 0x");
+            text.push_str((matrix[i]).numtoa_str(16, &mut num_buffer));
+            text.push_str("\n");
+        }
         serial.bwrite_all(text.as_bytes()).unwrap();
 
         for j in 0..8 {
@@ -168,6 +176,18 @@ fn main() -> ! {
 
         display.clear();
 
+/*        for i in 0..8 {
+            let x = matrix[i];
+            let mut y = 0;
+
+            for j in 0..8 {
+                let n = (x >> 4*j) & 0x0f;
+                let m = if n > 0 { n-1 } else { 0 };
+                y |= (m << 4*j);
+            }
+            matrix[i] = y;
+        }
+*/
         /*
         let style = PrimitiveStyleBuilder::new()
             .stroke_width(1)
@@ -182,9 +202,9 @@ fn main() -> ! {
             .draw(&mut display)
             .unwrap();
         */
-        Text::new(&text, Point::new(0, 24 ))
+        Text::new(&text, Point::new(0, 0 ))
             .into_styled(
-                TextStyleBuilder::new(Font6x12)
+                TextStyleBuilder::new(Font6x8)
                     .text_color(Rgb565::BLUE)
                     .build(),
             )
@@ -193,16 +213,6 @@ fn main() -> ! {
 
         // this flushes the ssd1331 framebuffer entirely to the ssd1331.
         display.flush();
-
-        let rows = 8;
-
-        for j in 0..rows {
-            if j == (i/8) % 8 {
-                matrix[j as usize] = 0x0f << ((i%8)*4);
-            } else {
-                matrix[j as usize] = 0;
-            }
-        }
 
         // something wrong with this, it's speed not out so maybe the macro doesn't work?
         // maybe just do it with unsafe directly?
@@ -237,7 +247,7 @@ fn main() -> ! {
         display.draw_hw_rect(34, 0, 95, 63, raw_red, Some(raw_green), &mut delay_source);
 */
 
-        delay_source.delay_ms(100 as u32);
+        delay_source.delay_ms(1000 as u32);
         // do some graphics stuff in here
     }
 }
