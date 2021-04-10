@@ -130,14 +130,14 @@ fn main() -> ! {
     let matrix_raw = 0xC000_0000 as *mut u32;
     let matrix = unsafe { core::slice::from_raw_parts_mut(matrix_raw, 8) };
 
-    matrix[0] = 0x05500550;
-    matrix[1] = 0x54455445;
-    matrix[2] = 0x54444445;
-    matrix[3] = 0x54444445;
-    matrix[4] = 0x54444445;
-    matrix[5] = 0x05444450;
-    matrix[6] = 0x00544500;
-    matrix[7] = 0x00055000;
+    matrix[0] = 0x02200220;
+    matrix[1] = 0x23322332;
+    matrix[2] = 0x23444432;
+    matrix[3] = 0x23455432;
+    matrix[4] = 0x23455432;
+    matrix[5] = 0x02344320;
+    matrix[6] = 0x00233200;
+    matrix[7] = 0x00022000;
 
     // TODO make this work
     /*
