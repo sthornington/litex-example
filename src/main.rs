@@ -130,9 +130,15 @@ fn main() -> ! {
     let matrix_raw = 0xC000_0000 as *mut u32;
     let matrix = unsafe { core::slice::from_raw_parts_mut(matrix_raw, 8) };
 
-    for x in matrix.iter_mut() {
-        *x = 0xffffffff;
-    }
+    matrix[0] = 0x05500550;
+    matrix[1] = 0x54455445;
+    matrix[2] = 0x54444445;
+    matrix[3] = 0x54444445;
+    matrix[4] = 0x54444445;
+    matrix[5] = 0x05444450;
+    matrix[6] = 0x00544500;
+    matrix[7] = 0x00055000;
+
     // TODO make this work
     /*
     let m0 = MATRIX { index: 0 };
@@ -157,15 +163,6 @@ fn main() -> ! {
 
     loop {
         i = i.wrapping_add(1);
-        text.clear();
-        for i in 0..8 {
-            text.push_str(i.numtoa_str(10, &mut num_buffer));
-            text.push_str(" 0x");
-            text.push_str((matrix[i]).numtoa_str(16, &mut num_buffer));
-            text.push_str("\n");
-        }
-        serial.bwrite_all(text.as_bytes()).unwrap();
-
         for j in 0..8 {
             if ((i as u8) & (1u8 << j)) > 0 {
                 let _ = LEDS { index: j }.set_high();
@@ -174,34 +171,18 @@ fn main() -> ! {
             }
         }
 
+
         display.clear();
-
-/*        for i in 0..8 {
-            let x = matrix[i];
-            let mut y = 0;
-
-            for j in 0..8 {
-                let n = (x >> 4*j) & 0x0f;
-                let m = if n > 0 { n-1 } else { 0 };
-                y |= (m << 4*j);
-            }
-            matrix[i] = y;
+        text.clear();
+        for i in 0..8 {
+            // TODO write a left-padding number formatter
+            text.push_str(i.numtoa_str(10, &mut num_buffer));
+            text.push_str(" 0x");
+            text.push_str((matrix[i]).numtoa_str(16, &mut num_buffer));
+            text.push_str("\n");
         }
-*/
-        /*
-        let style = PrimitiveStyleBuilder::new()
-            .stroke_width(1)
-            .stroke_color(Rgb565::YELLOW)
-            .build();        // triangle
-        Triangle::new(
-            Point::new(16, 16 ),
-            Point::new(16 + 16, 16 ),
-            Point::new(16 + 8, 0 ),
-        )
-            .into_styled(style)
-            .draw(&mut display)
-            .unwrap();
-        */
+//        serial.bwrite_all(text.as_bytes()).unwrap();
+
         Text::new(&text, Point::new(0, 0 ))
             .into_styled(
                 TextStyleBuilder::new(Font6x8)
@@ -213,6 +194,24 @@ fn main() -> ! {
 
         // this flushes the ssd1331 framebuffer entirely to the ssd1331.
         display.flush();
+
+        delay_source.delay_ms(100 as u32);
+
+        for i in 0..8 {
+            let x = matrix[i];
+            let mut y = 0;
+
+            for j in 0..8 {
+                let n = (x >> 4*j) & 0x07;
+                let m = match n {
+                    0 => 0,
+                    1 => 7,
+                    n => n-1
+                };
+                y |= (m << 4*j);
+            }
+            matrix[i] = y;
+        }
 
         // something wrong with this, it's speed not out so maybe the macro doesn't work?
         // maybe just do it with unsafe directly?
@@ -247,7 +246,6 @@ fn main() -> ! {
         display.draw_hw_rect(34, 0, 95, 63, raw_red, Some(raw_green), &mut delay_source);
 */
 
-        delay_source.delay_ms(1000 as u32);
         // do some graphics stuff in here
     }
 }
