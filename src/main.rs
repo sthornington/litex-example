@@ -130,14 +130,14 @@ fn main() -> ! {
     let matrix_raw = 0xC000_0000 as *mut u32;
     let matrix = unsafe { core::slice::from_raw_parts_mut(matrix_raw, 8) };
 
-    matrix[0] = 0x02200220;
-    matrix[1] = 0x23322332;
-    matrix[2] = 0x23444432;
-    matrix[3] = 0x23455432;
-    matrix[4] = 0x23455432;
-    matrix[5] = 0x02344320;
-    matrix[6] = 0x00233200;
-    matrix[7] = 0x00022000;
+    matrix[0] = 0x04400440;
+    matrix[1] = 0x46644664;
+    matrix[2] = 0x46555564;
+    matrix[3] = 0x46533564;
+    matrix[4] = 0x46533564;
+    matrix[5] = 0x04655640;
+    matrix[6] = 0x00466400;
+    matrix[7] = 0x00044000;
 
     // TODO make this work
     /*
@@ -204,9 +204,11 @@ fn main() -> ! {
             for j in 0..8 {
                 let n = (x >> 4*j) & 0x07;
                 let m = match n {
-                    0 => 0,
-                    1 => 7,
-                    n => n-1
+                    3 => 5,
+                    5 => 6,
+                    6 => 4,
+                    4 => 3,
+                    x => x
                 };
                 y |= (m << 4*j);
             }
